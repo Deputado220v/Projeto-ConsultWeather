@@ -1,0 +1,47 @@
+# importando bibliotecas
+
+import requests
+import pandas as pd
+
+# Perguntando a cidade que ele deseja saber o clima, dando como resposta a previsão de 30 dias
+
+city_name = input('Qual e a cidade?')
+days_prevision = 30
+
+# Criando o caminho da requisição
+
+access_token = '6aa00d442dc345219d200700250806'
+api_url = f'http://api.weatherapi.com/v1/forecast.json/history.json/future.json?key={access_token}&q={city_name}&days={days_prevision}&aqi=no&alerts=no'
+answer = requests.get(f'{api_url}')
+answer_status_code = answer.status_code
+
+print(f"Fazendo requisição para {city_name} por{days_prevision} dias...")
+
+# Com base na cidade solicitada, irá gerar um arquivo csv com as seguintes tabelas e dados, propostos pela API
+    
+if answer_status_code == 200:
+    dados_clima = answer.json()
+    previsoes = []
+
+    for dia in dados_clima['forecast']['forecastday']:
+        clima = [
+            dia['date'],
+            dados_clima['location']['name'],
+            dados_clima['location']['region'],
+            dia['day']['maxtemp_c'],
+            dia['day']['mintemp_c'],
+            dia['day']['condition']['text']
+        ]
+        previsoes.append(clima)
+else:
+    print('Erro na requisição')
+    
+# Criação do DataFrame
+
+colunas = ['Data', 'Cidade', 'Estado', 'Temperatura Máxima (C)', 'Temperatura Mínima (C)', 'Condição']
+dados_armazenados = pd.DataFrame(previsoes, columns=colunas)
+
+# Caminho de onde o arquivo será armazenado e quantos dias ele terá
+
+dados_armazenados.to_csv(f'dados/{city_name.lower().replace(" ", "_")}_clima_{days_prevision}_days.csv', encoding='utf-8-sig', index=False)
+print(f"Dados de {len(previsoes)} dias para {city_name} salvos com sucesso.")
